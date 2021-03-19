@@ -1,0 +1,33 @@
+package lib
+
+const (
+	SqlGetTableColumns = `
+SELECT
+	TABLE_NAME,
+	COLUMN_NAME,
+	COLUMN_COMMENT,
+	ORDINAL_POSITION,
+	IS_NULLABLE,
+	DATA_TYPE,
+	CHARACTER_MAXIMUM_LENGTH,
+	NUMERIC_PRECISION,
+	NUMERIC_SCALE,
+	COLUMN_TYPE
+FROM
+	INFORMATION_SCHEMA.COLUMNS
+WHERE
+TABLE_NAME =:tablename AND TABLE_SCHEMA=:schema
+ORDER BY ORDINAL_POSITION
+`
+
+	SqlGetTableNames = `
+SELECT
+    TABLE_NAME, TABLE_COMMENT
+FROM
+    information_schema.tables
+WHERE
+    table_type = 'BASE TABLE'
+AND
+	table_schema  = :database_name
+`
+)

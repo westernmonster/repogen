@@ -1,0 +1,17 @@
+development:
+    dialect: mysql
+    datasource: root:123456@tcp(localhost:3306)/done_api_dev?parseTime=true&charset=utf8mb4
+    database: done_api_dev
+    prefix: d_
+    dir: migrations
+    table: migrations
+
+production:
+    dialect: mysql
+    datasource: root:123456@/done_api_prod?parseTime=true
+    database: done_api_prod
+    prefix: d_
+    dir: migrations
+    table: migrations
+
+
