@@ -1,0 +1,39 @@
+name: Login
+vars:
+  base_url: "http://localhost:8000/api/v1"
+  email: "admin@enauka.in"
+  client_id: "77eae7aaebf39fd0c8bef84e58b37cfd"
+testcases:
+
+- name: login
+  steps:
+  - type: http
+    method: POST
+    headers:
+      Connection: "close"
+    url: "{{.base_url}}/reset"
+  - type: http
+    method: POST
+    headers:
+      Connection: "close"
+    url: "{{.base_url}}/oauth/login"
+    body: >
+      {
+        "identity": "{{.email}}",
+        "password": "123456",
+        "client_id": "{{.client_id}}"
+      }
+    vars:
+      accesstoken:
+        from: result.bodyjson.data.access_token
+    assertions:
+    - result.statuscode ShouldEqual 200
+    - result.bodyjson.code ShouldEqual 200
+    - result.bodyjson.data ShouldNotBeNil
+    - result.bodyjson.data.access_token ShouldNotBeEmpty
+    - result.bodyjson.data.refresh_token ShouldNotBeEmpty
+    - result.bodyjson.data.role ShouldEqual patient
+    - result.bodyjson.data.token_type ShouldEqual Bearer
+    - result.bodyjson.data.user_id ShouldNotBeEmpty
+
+

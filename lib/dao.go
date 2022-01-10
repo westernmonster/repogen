@@ -73,19 +73,104 @@ func GenInterface(tableName string) (st *Statement, err error) {
 	return st, nil
 }
 
-func GenerateGetAll(tableName string, columns []*TableColumnDef) (st *Statement, sqlSelect string) {
+func GenerateGetPaged(tableName string, columns []*TableColumnDef) (st *Statement, sqlCount, sqlSelect string) {
 	prefix := viper.GetString("development.prefix")
 	goName := strings.TrimPrefix(tableName, prefix)
 	pascalName := kace.Pascal(goName)
+	pluralName := kace.Pascal(inflection.Plural(goName))
 
 	cols := make([]string, 0)
 	for _, v := range columns {
 		cols = append(cols, "a."+v.ColumnName)
 	}
-	sqlSelect = `SELECT %s FROM %s WHERE 1=1 ORDER BY a.id DESC `
+
+	sqlCount = `SELECT COUNT(1) as count FROM %s WHERE 1=1 %s`
+	sqlCount = fmt.Sprintf(sqlCount, tableName+" a", "%s")
+	sqlSelect = `SELECT %s FROM %s WHERE 1=1 ORDER BY %s a.id DESC LIMIT ?,?`
+	sqlSelect = fmt.Sprintf(sqlSelect, strings.Join(cols, ","), tableName+" a", "%s")
+
+	st = Func().Params(Id("p").Op("*").Id("Dao")).Id("Get"+pluralName+"Paged").Params(
+		Id("c").Qual("context", "Context"),
+		Id("node").Qual("github.com/westernmonster/sqalx", "Node"),
+		Id("cond").Map(String()).Interface(),
+		Id("limit").Int(),
+		Id("offset").Int(),
+	).Params(
+		Id("total").Int(),
+		Id("items").Index().Op("*").Id("model."+pascalName),
+		Id("err").Error(),
+	).Block(
+		Id("items").Op("=").Make(Index().Op("*").Id("model."+pascalName), Lit(0)),
+		Line(),
+		Id("sqlCount").Op(":=").Lit(sqlCount),
+		Id("sqlSelect").Op(":=").Lit(sqlSelect),
+		Line(),
+		Id("condition").Op(":=").Make(Index().Interface(), Lit(0)),
+		Id("clause").Op(":=").Lit(""),
+		Line(),
+		If(
+			List(Id("val"), Id("ok")).Op(":=").Id("cond").Index(Lit("created_at[gt]")), Id("ok").Block(
+				Id("clause").Op("+=").Lit(" AND a.created_at > ?"),
+				Id("condition").Op("=").Append(Id("condition"), Id("val")),
+			),
+		),
+		Line(),
+		If(
+			List(Id("val"), Id("ok")).Op(":=").Id("cond").Index(Lit("created_at[lt]")), Id("ok").Block(
+				Id("clause").Op("+=").Lit(" AND a.created_at < ?"),
+				Id("condition").Op("=").Append(Id("condition"), Id("val")),
+			),
+		),
+		Line(),
+		If(
+			List(Id("val"), Id("ok")).Op(":=").Id("cond").Index(Lit("created_at[gte]")), Id("ok").Block(
+				Id("clause").Op("+=").Lit(" AND a.created_at >= ?"),
+				Id("condition").Op("=").Append(Id("condition"), Id("val")),
+			),
+		),
+		Line(),
+		If(
+			List(Id("val"), Id("ok")).Op(":=").Id("cond").Index(Lit("created_at[lte]")), Id("ok").Block(
+				Id("clause").Op("+=").Lit(" AND a.created_at <= ?"),
+				Id("condition").Op("=").Append(Id("condition"), Id("val")),
+			),
+		),
+		Line(),
+		Id("sqlCount").Op("=").Id("fmt").Dot("Sprintf").Call(Id("sqlCount"), Id("clause")),
+		If(
+			Err().Op("=").Id("node").Dot("GetContext").Call(Id("c"), Op("&").Id("total"), Id("sqlCount"), Id("condition").Op("...")), Err().Op("!=").Nil()).Block(
+			Id("log").Dot("For").Call(Id("c")).Dot("Errorf").Call(Lit("dao.Get"+pluralName+"Paged err(%+v) condition(%+v)"), Id("err"), Id("cond")),
+			Return(),
+		),
+		Line(),
+		Id("sqlSelect").Op("=").Id("fmt").Dot("Sprintf").Call(Id("sqlSelect"), Id("clause")),
+		Id("condition").Op("=").Append(Id("condition"), Id("offset"), Id("limit")),
+		Line(),
+		If(
+			Err().Op("=").Id("node").Dot("SelectContext").Call(Id("c"), Op("&").Id("items"), Id("sqlSelect"), Id("condition").Op("...")), Err().Op("!=").Nil()).Block(
+			Id("log").Dot("For").Call(Id("c")).Dot("Errorf").Call(Lit("dao.Get"+pluralName+"Paged err(%+v) condition(%+v)"), Id("err"), Id("cond")),
+			Return(),
+		),
+		Return(),
+	)
+
+	return
+}
+
+func GenerateGetAll(tableName string, columns []*TableColumnDef) (st *Statement, sqlSelect string) {
+	prefix := viper.GetString("development.prefix")
+	goName := strings.TrimPrefix(tableName, prefix)
+	pascalName := kace.Pascal(goName)
+	pluralName := kace.Pascal(inflection.Plural(goName))
+
+	cols := make([]string, 0)
+	for _, v := range columns {
+		cols = append(cols, "a."+v.ColumnName)
+	}
+	sqlSelect = `SELECT %s FROM %s WHERE 1=1 ORDER BY a.created_at DESC `
 	sqlSelect = fmt.Sprintf(sqlSelect, strings.Join(cols, ","), tableName+" a")
 
-	st = Func().Params(Id("p").Op("*").Id("Dao")).Id("Get"+kace.Pascal(inflection.Plural(goName))).Params(
+	st = Func().Params(Id("p").Op("*").Id("Dao")).Id("GetAll"+pluralName).Params(
 		Id("c").Qual("context", "Context"),
 		Id("node").Qual("github.com/westernmonster/sqalx", "Node"),
 	).Params(
@@ -97,7 +182,7 @@ func GenerateGetAll(tableName string, columns []*TableColumnDef) (st *Statement,
 		Line(),
 		If(
 			Err().Op("=").Id("node").Dot("SelectContext").Call(Id("c"), Op("&").Id("items"), Id("sqlSelect")), Err().Op("!=").Nil()).Block(
-			Id("log").Dot("For").Call(Id("c")).Dot("Errorf").Call(Lit("dao.Get"+pascalName+" err(%+v)"), Id("err")),
+			Id("log").Dot("For").Call(Id("c")).Dot("Errorf").Call(Lit("dao.GetAll"+pluralName+" err(%+v)"), Id("err")),
 			Return(),
 		),
 		Return(),

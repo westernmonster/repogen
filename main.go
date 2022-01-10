@@ -104,6 +104,16 @@ var repoCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 
+			err = generateService(node, v)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			err = generateHTTP(node, v)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 		}
 	},
 }
@@ -174,8 +184,133 @@ func initDatabase() (db *sqlx.DB, node sqalx.Node, err error) {
 	return
 }
 
-func generateRepo(node sqalx.Node, tableName string) (err error) {
+func generateHTTP(node sqalx.Node, tableName string) (err error) {
+	database := viper.GetString("development.database")
+	columns, err := lib.GetTableColumnDefs(node, tableName, database)
+	if err != nil {
+		err = tracerr.Wrap(err)
+		return
+	}
 
+	if len(columns) == 0 {
+		log.Fatal("Could not find column info of table " + tableName)
+	}
+
+	f := NewFile("service")
+
+	// Generate Struct
+	structCode, err := lib.GenerateItemStruct(tableName, columns)
+	if err != nil {
+		err = tracerr.Wrap(err)
+		return
+	}
+
+	f.Add(structCode)
+	f.Add(Line())
+
+	structRespCode, err := lib.ServiceListRespStruct(tableName, columns)
+	if err != nil {
+		err = tracerr.Wrap(err)
+		return
+	}
+
+	f.Add(structRespCode)
+	f.Add(Line())
+
+	singularName := inflection.Singular(tableName)
+	// pascalName := kace.Pascal(singularName)
+
+	codeQuestAll, _ := lib.HTTPGetAll(tableName, columns)
+	f.Add(codeQuestAll)
+	f.Add(Line())
+
+	codeQuestAllpaged, _, _ := lib.HTTPGetPaged(tableName, columns)
+	f.Add(codeQuestAllpaged)
+	f.Add(Line())
+
+	codeGetByID, _ := lib.HTTPGetByID(tableName, columns)
+	f.Add(codeGetByID)
+	f.Add(Line())
+
+	os.MkdirAll(path.Join("./repos", singularName), os.ModePerm)
+	os.MkdirAll(path.Join("./repos", singularName, "sql", singularName), os.ModePerm)
+
+	codeFileName := path.Join("./repos", singularName, fmt.Sprintf("%s_http.go", singularName))
+	err = f.Save(codeFileName)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	return
+}
+
+func generateService(node sqalx.Node, tableName string) (err error) {
+	database := viper.GetString("development.database")
+	columns, err := lib.GetTableColumnDefs(node, tableName, database)
+	if err != nil {
+		err = tracerr.Wrap(err)
+		return
+	}
+
+	if len(columns) == 0 {
+		log.Fatal("Could not find column info of table " + tableName)
+	}
+
+	f := NewFile("service")
+
+	// Generate Struct
+	structCode, err := lib.GenerateItemStruct(tableName, columns)
+	if err != nil {
+		err = tracerr.Wrap(err)
+		return
+	}
+
+	f.Add(structCode)
+	f.Add(Line())
+
+	structRespCode, err := lib.ServiceListRespStruct(tableName, columns)
+	if err != nil {
+		err = tracerr.Wrap(err)
+		return
+	}
+
+	f.Add(structRespCode)
+	f.Add(Line())
+
+	singularName := inflection.Singular(tableName)
+	// pascalName := kace.Pascal(singularName)
+
+	codeQuestAll, _ := lib.ServiceGetAll(tableName, columns)
+	f.Add(codeQuestAll)
+	f.Add(Line())
+
+	codeQuestAllpaged, _, _ := lib.ServiceGetPaged(tableName, columns)
+	f.Add(codeQuestAllpaged)
+	f.Add(Line())
+
+	codeGetByID, _ := lib.ServiceGetByID(tableName, columns)
+	f.Add(codeGetByID)
+	f.Add(Line())
+
+	codegetByID, _ := lib.ServicegetByID(tableName, columns)
+	f.Add(codegetByID)
+	f.Add(Line())
+
+	os.MkdirAll(path.Join("./repos", singularName), os.ModePerm)
+	os.MkdirAll(path.Join("./repos", singularName, "sql", singularName), os.ModePerm)
+
+	codeFileName := path.Join("./repos", singularName, fmt.Sprintf("%s_service.go", singularName))
+	err = f.Save(codeFileName)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	return
+}
+
+func generateRepo(node sqalx.Node, tableName string) (err error) {
 	database := viper.GetString("development.database")
 	columns, err := lib.GetTableColumnDefs(node, tableName, database)
 	if err != nil {
@@ -199,49 +334,34 @@ func generateRepo(node sqalx.Node, tableName string) (err error) {
 	f.Add(structCode)
 	f.Add(Line())
 
-	interfaceCode, err := lib.GenInterface(tableName)
-	if err != nil {
-		err = tracerr.Wrap(err)
-		return
-	}
-
-	f.Add(interfaceCode)
-	f.Add(Line())
-
 	singularName := inflection.Singular(tableName)
 	pascalName := kace.Pascal(singularName)
 	f.Add(Type().Id(pascalName + "Repository").Struct())
 	f.Add(Line())
 
 	codeQuestAll, _ := lib.GenerateGetAll(tableName, columns)
-	f.Add(Comment("GetAll get all records"))
 	f.Add(codeQuestAll)
 	f.Add(Line())
 
+	codeQuestAllpaged, _, _ := lib.GenerateGetPaged(tableName, columns)
+	f.Add(codeQuestAllpaged)
+	f.Add(Line())
+
 	codeGetByID, _ := lib.GenerateGetByID(tableName, columns)
-	f.Add(Comment("GetByID get a record by ID"))
 	f.Add(codeGetByID)
 	f.Add(Line())
 
 	codeInsert, _ := lib.GenerateInsert(tableName, columns)
-	f.Add(Comment("Insert insert a new record"))
 	f.Add(codeInsert)
 	f.Add(Line())
 
 	codeUpdate, _ := lib.GenerateUpdate(tableName, columns)
-	f.Add(Comment("Update update a exist record"))
 	f.Add(codeUpdate)
 	f.Add(Line())
 
 	codeDelete, _ := lib.GenerateDelete(tableName, columns)
-	f.Add(Comment("Delete logic delete a exist record"))
 	f.Add(codeDelete)
 	f.Add(Line())
-
-	// codeBatchDelete := lib.GenerateBatchDelete(tableName, columns)
-	// f.Add(Comment("BatchDelete logic batch delete records"))
-	// f.Add(codeBatchDelete)
-	// f.Add(Line())
 
 	os.MkdirAll(path.Join("./repos", singularName), os.ModePerm)
 	os.MkdirAll(path.Join("./repos", singularName, "sql", singularName), os.ModePerm)
