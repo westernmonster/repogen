@@ -30,6 +30,8 @@ type DoctorItem struct {
 	TaskURL                                        string  `json:"task_url"`
 	ZoomPersonalMeetingID                          string  `json:"zoom_personal_meeting_id"`
 	CreatedAt                                      int64   `json:"created_at"`
+	Decfield1                                      float64 `json:"decfield1"`
+	Charfield                                      string  `json:"charfield"`
 	UpdatedAt                                      int64   `json:"updated_at"`
 	AddressLine2                                   string  `json:"address_line2"`
 }
@@ -75,6 +77,8 @@ func (p *Service) GetAllDoctors(c context.Context) (items []*model.DoctorItem, e
 			TaskURL:                                        v.TaskURL,
 			ZoomPersonalMeetingID:                          v.ZoomPersonalMeetingID,
 			CreatedAt:                                      v.CreatedAt,
+			Decfield1:                                      v.Decfield1,
+			Charfield:                                      v.Charfield,
 			UpdatedAt:                                      v.UpdatedAt,
 			AddressLine2:                                   v.AddressLine2,
 		}
@@ -125,6 +129,8 @@ func (p *Service) GetDoctorsListPaged(c context.Context, cond map[string]interfa
 			TaskURL:                                        v.TaskURL,
 			ZoomPersonalMeetingID:                          v.ZoomPersonalMeetingID,
 			CreatedAt:                                      v.CreatedAt,
+			Decfield1:                                      v.Decfield1,
+			Charfield:                                      v.Charfield,
 			UpdatedAt:                                      v.UpdatedAt,
 			AddressLine2:                                   v.AddressLine2,
 		}

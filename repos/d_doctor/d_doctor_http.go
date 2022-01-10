@@ -34,6 +34,8 @@ type DoctorItem struct {
 	TaskURL                                        string  `json:"task_url"`
 	ZoomPersonalMeetingID                          string  `json:"zoom_personal_meeting_id"`
 	CreatedAt                                      int64   `json:"created_at"`
+	Decfield1                                      float64 `json:"decfield1"`
+	Charfield                                      string  `json:"charfield"`
 	UpdatedAt                                      int64   `json:"updated_at"`
 	AddressLine2                                   string  `json:"address_line2"`
 }

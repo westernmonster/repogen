@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/codemodus/kace"
@@ -36,7 +35,7 @@ func GenerateStruct(tableName string, columns []*TableColumnDef) (st *Statement,
 	for _, v := range columns {
 		columnName := kace.Pascal(v.ColumnName)
 		ptr := Op("*")
-		comment := fmt.Sprintf("%s %s", columnName, v.ColumnComment)
+		// comment := fmt.Sprintf("%s %s", columnName, v.ColumnComment)
 
 		switch v.DataType {
 		case "varchar":
@@ -45,61 +44,61 @@ func GenerateStruct(tableName string, columns []*TableColumnDef) (st *Statement,
 			fallthrough
 		case "longtext":
 			if v.IsNullable == "NO" {
-				fields = append(fields, Id(columnName).String().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).String().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				break
 			}
-			fields = append(fields, Id(columnName).Add(ptr).String().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+			fields = append(fields, Id(columnName).Add(ptr).String().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 		case "datetime":
 			fallthrough
 		case "timestamp":
 			if v.IsNullable == "NO" {
-				fields = append(fields, Id(columnName).Qual("time", "Time").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Qual("time", "Time").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				break
 			}
-			fields = append(fields, Id(columnName).Add(ptr).Qual("time", "Time").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+			fields = append(fields, Id(columnName).Add(ptr).Qual("time", "Time").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 		case "tinyint":
 			fallthrough
 		case "int":
 			if v.IsNullable == "NO" {
 				if v.ColumnName != "created_at" && v.ColumnName != "updated_at" {
-					fields = append(fields, Id(columnName).Int32().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+					fields = append(fields, Id(columnName).Int32().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				} else {
-					fields = append(fields, Id(columnName).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+					fields = append(fields, Id(columnName).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				}
 				break
 			}
 			if v.ColumnName != "created_at" && v.ColumnName != "updated_at" {
-				fields = append(fields, Id(columnName).Add(ptr).Int32().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Add(ptr).Int32().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 			} else {
-				fields = append(fields, Id(columnName).Add(ptr).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Add(ptr).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 			}
 		case "bigint":
 			if v.IsNullable == "NO" {
 				if v.ColumnName != "created_at" && v.ColumnName != "updated_at" {
-					fields = append(fields, Id(columnName).Int64().Tag(map[string]string{"json": v.ColumnName + ",string", "db": v.ColumnName}).Comment(comment))
+					fields = append(fields, Id(columnName).Int64().Tag(map[string]string{"json": v.ColumnName + ",string", "db": v.ColumnName}))
 				} else {
-					fields = append(fields, Id(columnName).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+					fields = append(fields, Id(columnName).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				}
 				break
 			}
 			if v.ColumnName != "created_at" && v.ColumnName != "updated_at" {
-				fields = append(fields, Id(columnName).Add(ptr).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Add(ptr).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 			} else {
-				fields = append(fields, Id(columnName).Add(ptr).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Add(ptr).Int64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 			}
 
 		case "decimal":
 			if v.IsNullable == "NO" {
-				fields = append(fields, Id(columnName).Float64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Float64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				break
 			}
-			fields = append(fields, Id(columnName).Add(ptr).Float64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+			fields = append(fields, Id(columnName).Add(ptr).Float64().Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 		case "bit":
 			if v.IsNullable == "NO" {
-				fields = append(fields, Id(columnName).Qual("github.com/jmoiron/sqlx/types", "BitBool").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+				fields = append(fields, Id(columnName).Qual("github.com/jmoiron/sqlx/types", "BitBool").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 				break
 			}
-			fields = append(fields, Id(columnName).Add(ptr).Qual("github.com/jmoiron/sqlx/types", "BitBool").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}).Comment(comment))
+			fields = append(fields, Id(columnName).Add(ptr).Qual("github.com/jmoiron/sqlx/types", "BitBool").Tag(map[string]string{"json": v.ColumnName, "db": v.ColumnName}))
 		default:
 			err = tracerr.Errorf("convert column %s, data type %s failed", v.ColumnName, v.DataType)
 			return
